@@ -1190,3 +1190,323 @@
 1369848628 source:c:\development\ennovia\include\world\database.cpp
 	"world/database.hpp"
 
+1383865867 source:/home/david/Development/Ennovia/ennovia-server/include/network/proto/client.pb.cc
+	"client.pb.h"
+	<algorithm>
+	<google/protobuf/stubs/once.h>
+	<google/protobuf/io/coded_stream.h>
+	<google/protobuf/wire_format_lite_inl.h>
+	<google/protobuf/descriptor.h>
+	<google/protobuf/reflection_ops.h>
+	<google/protobuf/wire_format.h>
+
+1383865867 /home/david/Development/Ennovia/ennovia-server/include/network/proto/client.pb.h
+	<string>
+	<google/protobuf/stubs/common.h>
+	<google/protobuf/generated_message_util.h>
+	<google/protobuf/repeated_field.h>
+	<google/protobuf/extension_set.h>
+	<google/protobuf/generated_message_reflection.h>
+
+1383865867 source:/home/david/Development/Ennovia/ennovia-server/include/network/proto/msg.pb.cc
+	"msg.pb.h"
+	<algorithm>
+	<google/protobuf/stubs/once.h>
+	<google/protobuf/io/coded_stream.h>
+	<google/protobuf/wire_format_lite_inl.h>
+	<google/protobuf/descriptor.h>
+	<google/protobuf/reflection_ops.h>
+	<google/protobuf/wire_format.h>
+
+1383865867 /home/david/Development/Ennovia/ennovia-server/include/network/proto/msg.pb.h
+	<string>
+	<google/protobuf/stubs/common.h>
+	<google/protobuf/generated_message_util.h>
+	<google/protobuf/repeated_field.h>
+	<google/protobuf/extension_set.h>
+	<google/protobuf/generated_message_reflection.h>
+
+1383865867 source:/home/david/Development/Ennovia/ennovia-server/include/network/proto/server.pb.cc
+	"server.pb.h"
+	<algorithm>
+	<google/protobuf/stubs/once.h>
+	<google/protobuf/io/coded_stream.h>
+	<google/protobuf/wire_format_lite_inl.h>
+	<google/protobuf/descriptor.h>
+	<google/protobuf/reflection_ops.h>
+	<google/protobuf/wire_format.h>
+
+1383865867 /home/david/Development/Ennovia/ennovia-server/include/network/proto/server.pb.h
+	<string>
+	<google/protobuf/stubs/common.h>
+	<google/protobuf/generated_message_util.h>
+	<google/protobuf/repeated_field.h>
+	<google/protobuf/extension_set.h>
+	<google/protobuf/generated_message_reflection.h>
+
+1383865952 source:/home/david/Development/Ennovia/ennovia-server/include/world/database.cpp
+	"world/database.hpp"
+
+1383865941 /home/david/Development/Ennovia/ennovia-server/include/world/database.hpp
+	<sstream>
+	<boost/shared_ptr.hpp>
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/server.cpp
+	<iostream>
+	<boost/asio.hpp>
+	<boost/shared_ptr.hpp>
+	<boost/lexical_cast.hpp>
+	"governor.hpp"
+	"world/player.hpp"
+	"world/optionlist.hpp"
+	"misc/registry.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/governor.hpp
+	<fstream>
+	"network/network.hpp"
+	"world/library.hpp"
+	"world/lua/manager.hpp"
+	"world/actions.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/network/network.hpp
+	"network/connection.hpp"
+	"network/message.hpp"
+	"network/server.hpp"
+	"network/client.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/network/connection.hpp
+	<boost/bind.hpp>
+	<boost/shared_ptr.hpp>
+	<boost/tuple/tuple.hpp>
+	<boost/asio.hpp>
+	<boost/function.hpp>
+	<iomanip>
+	<string>
+	<sstream>
+	<vector>
+	"misc/registry.hpp"
+	"network/proto/msg.pb.h"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/misc/registry.hpp
+	<map>
+	<cstdlib>
+	<cstdio>
+	<boost/bind.hpp>
+	<boost/shared_ptr.hpp>
+	<boost/bimap.hpp>
+	"misc/registry_forw.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/misc/registry_forw.hpp
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/network/message.hpp
+	"network/proto/client.pb.h"
+	"network/proto/server.pb.h"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/network/server.hpp
+	<boost/tuple/tuple.hpp>
+	"network/connection.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/network/client.hpp
+	"network/connection.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/library.hpp
+	"misc/registry.hpp"
+	"core.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/core.hpp
+	"misc/irrlicht.hpp"
+	<boost/shared_ptr.hpp>
+	<sstream>
+
+1383866031 /home/david/Development/Ennovia/ennovia-server/include/misc/irrlicht.hpp
+	<boost/asio.hpp>
+	<irrlicht/irrlicht.h>
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/lua/manager.hpp
+	<lua.hpp>
+	<luabind/luabind.hpp>
+	<luabind/operator.hpp>
+	<luabind/dependency_policy.hpp>
+	<luabind/adopt_policy.hpp>
+	<luabind/return_reference_to_policy.hpp>
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/actions.hpp
+	<set>
+	"core.hpp"
+	"world/position.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/position.hpp
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/player.hpp
+	"world/livingobject.hpp"
+	"world/items.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/livingobject.hpp
+	"world/locatable.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/locatable.hpp
+	<deque>
+	"world/entity.hpp"
+	"world/position.hpp"
+	"world/actions.hpp"
+	"world/inventory.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/entity.hpp
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/inventory.hpp
+	<boost/multi_array.hpp>
+	"world/items.hpp"
+	"misc/registry_forw.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/items.hpp
+	"world/entity.hpp"
+	"world/actions.hpp"
+	"misc/registry.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/optionlist.hpp
+	<string>
+	<vector>
+	"core.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/governor.cpp
+	"governor.hpp"
+	"core.hpp"
+	"world/map.hpp"
+	"world/tile.hpp"
+	"world/optionlist.hpp"
+	"world/player.hpp"
+	"world/database.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/map.hpp
+	<boost/multi_array.hpp>
+	<vector>
+	<sstream>
+	"misc/astar/stlastar.h"
+	"world/entity.hpp"
+	"world/position.hpp"
+	"world/object.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/misc/astar/stlastar.h
+	<iostream>
+	<stdio.h>
+	<assert.h>
+	<algorithm>
+	<vector>
+	"fsa.h"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/misc/astar/fsa.h
+	<string.h>
+	<stdio.h>
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/object.hpp
+	"world/locatable.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/world/tile.hpp
+	<set>
+	"world/locatable.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/misc/registry.cpp
+	"misc/registry.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/network/connection.cpp
+	"network/connection.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/network/proxies.cpp
+	"network/network.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/network/server.cpp
+	"network/server.hpp"
+	"network/message.hpp"
+	"world/player.hpp"
+	"governor.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/actions.cpp
+	"world/actions.hpp"
+	"world/locatable.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/entity.cpp
+	"world/entity.hpp"
+	"world/optionlist.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/inventory.cpp
+	"world/inventory.hpp"
+	"world/locatable.hpp"
+	"misc/registry.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/items.cpp
+	"world/items.hpp"
+	"world/optionlist.hpp"
+	"world/livingobject.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/library.cpp
+	"world/library.hpp"
+	"world/locatable.hpp"
+	"world/livingobject.hpp"
+	"world/player.hpp"
+	"world/map.hpp"
+	"world/optionlist.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/livingobject.cpp
+	"world/livingobject.hpp"
+	"world/map.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/locatable.cpp
+	"world/locatable.hpp"
+	"world/tile.hpp"
+	"world/map.hpp"
+	"world/optionlist.hpp"
+	"misc/irrlicht.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/lua/manager.cpp
+	"world/lua/manager.hpp"
+	"world/tile.hpp"
+	"world/map.hpp"
+	"world/optionlist.hpp"
+	"world/items.hpp"
+	"world/livingobject.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/map.cpp
+	"world/map.hpp"
+	"world/tile.hpp"
+	"world/player.hpp"
+	"misc/registry.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/objects.cpp
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/optionlist.cpp
+	"world/optionlist.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/player.cpp
+	"world/player.hpp"
+	"world/optionlist.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/position.cpp
+	"world/position.hpp"
+	"world/map.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/server/actions/move.cpp
+	"world/actions.hpp"
+	"world/livingobject.hpp"
+	"governor.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/server/locatable.cpp
+	"world/locatable.hpp"
+	"world/optionlist.hpp"
+	"world/position.hpp"
+	"world/map.hpp"
+	"governor.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/world/tile.cpp
+	"world/tile.hpp"
+	"world/map.hpp"
+	"world/optionlist.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/network/message_client.cpp
+	"network/network.hpp"
+
+1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/network/message_server.cpp
+	"network/network.hpp"
+	"network/proxies.hpp"
+
+1383865679 /home/david/Development/Ennovia/ennovia-server/include/network/proxies.hpp
+

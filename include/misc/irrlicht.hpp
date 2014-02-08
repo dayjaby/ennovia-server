@@ -2,6 +2,6 @@
 #define ENNOVIA_IRRLICHT_HPP
 
 #include <boost/asio.hpp>
-#include <irrlicht.h>
+#include <irrlicht/irrlicht.h>
 
 #endif

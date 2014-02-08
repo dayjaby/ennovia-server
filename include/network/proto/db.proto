@@ -1,4 +1,4 @@
-package Ennovia.DB;
+epackage Ennovia.DB;
 
 
 message Locatable {

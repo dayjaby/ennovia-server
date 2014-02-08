@@ -9,8 +9,7 @@ namespace Ennovia {
 
     class Database {
     public:
-        typedef boost::shared_ptr<MYSQL_RES> Result;
-
+        typedef void Result;
         Database(const std::string& ip, const std::string& username, const std::string& password);
         ~Database();
 
@@ -20,7 +19,6 @@ namespace Ennovia {
         void query();
         Result result();
         std::string escape(const std::string& str);
-        PgDatabase db;
     };
 }
 
