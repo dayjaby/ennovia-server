@@ -8,6 +8,8 @@
 #include "world/actions.hpp"
 #include "world/locatable.hpp"
 
+#include <mongo/client/dbclient.h>
+
 namespace Ennovia
 {
 
@@ -59,7 +61,8 @@ struct GovernorImpl
     int ticks;
     std::map<std::string,int> players;
     Server server;
-
+    mongo::Status mongoStatus;
+    mongo::DBClientConnection db;
     Lua::Manager lua;
 };
 
@@ -67,8 +70,12 @@ GovernorImpl::GovernorImpl(Governor& gov) :
     governor(gov),
     //db(new Database("tcp://127.0.0.1:3306","root","")),
     timer(io_service, boost::posix_time::milliseconds(TICK)),
-    server(io_service,PORT),ticks(0)
+    server(io_service,PORT),
+    ticks(0),
+    mongoStatus(mongo::client::initialize())
 {
+    std::cout << "Trying to connect to database..." << std::endl;
+    db.connect("localhost");
     std::cout << "GovernorImpl constructed" << std::endl;
 }
 
@@ -103,6 +110,20 @@ void GovernorImpl::updateLocatablePosition(Locatable* locatable)
     int id = locatables.get(locatable);
     if(id)
     {
+        ServerConnection connection = connections.get(id);
+        if(connection.get())
+        {
+            std::cout << "Update position" << std::endl;
+            // This locatable is a player! Save his data in the database
+            mongo::BSONObjBuilder builder1,builder2,builder3;
+            builder1.append("x", locatable->getPosition().x);
+            builder1.append("y", locatable->getPosition().y);
+            builder2.append("$set",builder1.obj());
+            builder3.append("name", locatable->getName());
+            /*db.update("ennovia.player",
+                      builder3.obj(),
+                      builder2.obj());*/
+        }
         governor.log << "UPDATE LOCATABLE THAT EXISTS" << std::endl;
         Map* map = locatable->getPosition().map;
         int mapid = maps.get(locatable->getPosition().map);
@@ -110,8 +131,8 @@ void GovernorImpl::updateLocatablePosition(Locatable* locatable)
         msg["msg"] = LOCATABLE_POSITION;
         msg["id"] = id;
         msg["mapid"] = mapid;
-        msg["x"] = locatable->getPosition().x;
-        msg["y"] = locatable->getPosition().y;
+        msg["x"] = int(locatable->getPosition().x * 100);
+        msg["y"] = int(locatable->getPosition().y * 100);
 
         typedef std::set<Locatable*>::iterator Iterator;
         for(Iterator i = map->locatables.begin(); i != map->locatables.end(); ++i)
@@ -142,8 +163,8 @@ void GovernorImpl::moveLocatable(int id,float x,float y)
         Json::Value msg(Json::objectValue);
         msg["msg"] = MOVE_TO;
         msg["id"] = id;
-        msg["x"] = x;
-        msg["y"] = y;
+        msg["x"] = int(x*100);
+        msg["y"] = int(y*100);
         ServerConnection connection = connections.get(id);
         if(connection.get())
         {
@@ -225,8 +246,8 @@ void GovernorImpl::getLocatablePosition(ServerConnection connection,int id)
         position["msg"] = LOCATABLE_POSITION;
         position["id"] = id;
         position["map"] = mapid;
-        position["x"] = locatable->getPosition().x;
-        position["y"] = locatable->getPosition().y;
+        position["x"] = int(locatable->getPosition().x*100);
+        position["y"] = int(locatable->getPosition().y*100);
         connection->write(position);
     }
     else
@@ -262,58 +283,52 @@ void GovernorImpl::login(ServerConnection connection,const std::string& username
     /// TODO: LUA
     //db->playerLogin(username,password);
     Json::Value answer(Json::objectValue);
-    if(username.compare("admin") == 0 || username.compare("beni") == 0)
+    std::auto_ptr<mongo::DBClientCursor> cursor = db.query("ennovia.player", BSON("name" << username << "password" << password));
+    if(cursor->more())
     {
-        if(password.compare("lol") == 0)
+        mongo::BSONObj playerdata = cursor->next();
+        answer["msg"] = LOGIN_VALID;
+        connection->write(answer);
+        Locatable* player;
+        int player_id;
+        if(players.count(username) > 0)
         {
-            answer["msg"] = LOGIN_VALID;
-            connection->write(answer);
-            Locatable* player;
-            int player_id;
-            if(players.count(username) > 0)
+            player_id = players[username];
+            player = locatables.get(player_id);
+            if(player)
             {
-                player_id = players[username];
-                player = locatables.get(player_id);
-                if(player)
-                {
-                    ServerConnection old_connection = connections.get(player_id);
-                    old_connection->disconnect();
-                }
+                ServerConnection old_connection = connections.get(player_id);
+                old_connection->disconnect();
             }
-            else
-            {
-                player_id = locatables.create(username);
-                players[username] = player_id;
-                player = locatables.get(player_id);
-            }
-            governor.log << "Login: " << player_id;
-            player->model() = "faerie.md2";
-            player->texture() = "faerie2.bmp";
-            Map* map = maps.get(1);
-            if(map)
-            {
-                player->setPosition(Position(5,5,map));
-                governor.log << "Introduce all locatables" << std::endl;
-                introduceAllLocatables(connection,player_id);
-                governor.log << "Send you are " << player_id << std::endl;
-                Json::Value youAre(Json::objectValue);
-                youAre["msg"] = YOU_ARE;
-                youAre["id"] = player_id;
-                connection->write(youAre);
-
-                getLocatablePosition(connection,player_id);
-            }
-            connections.create(player_id,connection);
         }
         else
         {
-            answer["msg"] = LOGIN_PASSWORD_INVALID;
-            connection->write(answer);
+            player_id = locatables.create(username);
+            players[username] = player_id;
+            player = locatables.get(player_id);
         }
+        governor.log << "Login: " << player_id;
+        player->model() = playerdata["model"].String();
+        player->texture() = playerdata["texture"].String();
+        Map* map = maps.get(playerdata["currentMap"].Int());
+        if(map)
+        {
+            player->setPosition(Position(playerdata["x"].Double(),playerdata["y"].Double(),map));
+            governor.log << "Introduce all locatables" << std::endl;
+            introduceAllLocatables(connection,player_id);
+            governor.log << "Send you are " << player_id << std::endl;
+            Json::Value youAre(Json::objectValue);
+            youAre["msg"] = YOU_ARE;
+            youAre["id"] = player_id;
+            connection->write(youAre);
+
+            getLocatablePosition(connection,player_id);
+        }
+        connections.create(player_id,connection);
     }
     else
     {
-        answer["msg"] = LOGIN_USERNAME_INVALID;
+        answer["msg"] = LOGIN_PASSWORD_INVALID;
         connection->write(answer);
     }
 }
@@ -387,7 +402,10 @@ void GovernorImpl::introduceAllLocatables(ServerConnection connection,int id)
     }
 }
 
-Governor::Governor() : log("server_log.txt"),d(new GovernorImpl(*this)) {
+Governor::Governor()
+: log("server_log.txt")
+, d(new GovernorImpl(*this))
+{
     std::cout << "Governor constructed" << std::endl;
 }
 

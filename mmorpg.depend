@@ -1245,21 +1245,21 @@
 	<google/protobuf/extension_set.h>
 	<google/protobuf/generated_message_reflection.h>
 
-1383865952 source:/home/david/Development/Ennovia/ennovia-server/include/world/database.cpp
-	"world/database.hpp"
+1415892185 source:/home/david/Development/Ennovia/ennovia-server/include/world/database.cpp
 
-1383865941 /home/david/Development/Ennovia/ennovia-server/include/world/database.hpp
+1415895804 /home/david/Development/Ennovia/ennovia-server/include/world/database.hpp
 	<sstream>
 	<boost/shared_ptr.hpp>
+	<mongo/client/dbclient.h>
 
-1393408579 source:/home/david/Development/Ennovia/ennovia-server/server.cpp
+1415908050 source:/home/david/Development/Ennovia/ennovia-server/server.cpp
 	<iostream>
 	<boost/asio.hpp>
 	<boost/shared_ptr.hpp>
 	<boost/lexical_cast.hpp>
 	"governor.hpp"
 
-1393410951 /home/david/Development/Ennovia/ennovia-server/include/governor.hpp
+1415909385 /home/david/Development/Ennovia/ennovia-server/include/governor.hpp
 	<fstream>
 	<memory>
 	"network/network.hpp"
@@ -1269,11 +1269,12 @@
 	"network/message.hpp"
 	"network/server.hpp"
 
-1415886561 /home/david/Development/Ennovia/ennovia-server/include/network/connection.hpp
+1415913224 /home/david/Development/Ennovia/ennovia-server/include/network/connection.hpp
 	<boost/bind.hpp>
 	<boost/shared_ptr.hpp>
 	<boost/tuple/tuple.hpp>
 	<boost/asio.hpp>
+	<boost/asio/ssl.hpp>
 	<boost/function.hpp>
 	<iomanip>
 	<string>
@@ -1294,7 +1295,7 @@
 
 1415312317 /home/david/Development/Ennovia/ennovia-server/include/network/message.hpp
 
-1415872905 /home/david/Development/Ennovia/ennovia-server/include/network/server.hpp
+1415890423 /home/david/Development/Ennovia/ennovia-server/include/network/server.hpp
 	<boost/tuple/tuple.hpp>
 	"network/connection.hpp"
 
@@ -1358,7 +1359,7 @@
 	<vector>
 	"core.hpp"
 
-1415883374 source:/home/david/Development/Ennovia/ennovia-server/src/governor.cpp
+1415910152 source:/home/david/Development/Ennovia/ennovia-server/src/governor.cpp
 	"governor.hpp"
 	"core.hpp"
 	"world/map.hpp"
@@ -1368,6 +1369,7 @@
 	"world/library.hpp"
 	"world/actions.hpp"
 	"world/locatable.hpp"
+	<mongo/client/dbclient.h>
 
 1393410695 /home/david/Development/Ennovia/ennovia-server/include/world/map.hpp
 	<boost/multi_array.hpp>
@@ -1397,18 +1399,18 @@
 1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/misc/registry.cpp
 	"misc/registry.hpp"
 
-1415885150 source:/home/david/Development/Ennovia/ennovia-server/src/network/connection.cpp
+1415891349 source:/home/david/Development/Ennovia/ennovia-server/src/network/connection.cpp
 	"network/connection.hpp"
 
 1383865679 source:/home/david/Development/Ennovia/ennovia-server/src/network/proxies.cpp
 	"network/network.hpp"
 
-1415873041 source:/home/david/Development/Ennovia/ennovia-server/src/network/server.cpp
+1415897340 source:/home/david/Development/Ennovia/ennovia-server/src/network/server.cpp
 	"network/server.hpp"
 	"network/message.hpp"
 	"governor.hpp"
 
-1393411949 source:/home/david/Development/Ennovia/ennovia-server/src/world/actions.cpp
+1415896540 source:/home/david/Development/Ennovia/ennovia-server/src/world/actions.cpp
 	"world/actions.hpp"
 	"world/locatable.hpp"
 	"governor.hpp"
@@ -1495,7 +1497,7 @@
 
 1383865679 /home/david/Development/Ennovia/ennovia-server/include/network/proxies.hpp
 
-1383865952 source:/home/david/Development/Ennovia/ennovia-server/src/world/database.cpp
+1415895808 source:/home/david/Development/Ennovia/ennovia-server/src/world/database.cpp
 	"world/database.hpp"
 
 1415872489 /home/david/Development/Ennovia/ennovia-server/src/misc/json/jsoncons.hpp

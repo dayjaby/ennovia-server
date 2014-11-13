@@ -5,7 +5,7 @@ namespace Ennovia
 
 void Connection::async_read(ErrorHandler errorHandler, Handler handler, boost::shared_ptr<Connection> conn)
 {
-    boost::asio::async_read(socket_,boost::asio::buffer(inbound_header_,4),
+    boost::asio::async_read(ssl_socket_,boost::asio::buffer(inbound_header_,4),
     //boost::asio::async_read(socket_,boost::asio::buffer(inbound_buffer_),
                             boost::bind(&Connection::handle_read_header,
                                         this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred,
@@ -30,7 +30,7 @@ void Connection::handle_read_header(const boost::system::error_code& e, size_t b
                 sz = (sz << 8) | inbound_header_[0];
             std::cout << "Size " << sz << std::endl;
             inbound_data_.resize(sz);
-            boost::asio::async_read(socket_,boost::asio::buffer(inbound_buffer_),
+            boost::asio::async_read(ssl_socket_,boost::asio::buffer(inbound_data_),
                             boost::bind(&Connection::handle_read,
                                         this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred,
                                         handler,conn));
@@ -81,7 +81,7 @@ void Connection::write_(Json::Value val)
         outbound_data_[3] = sz & 255;
         outbound_data_.insert(outbound_data_.end(),json.begin(),json.end());
         //json.copy(&inbound_data_[HEADER_SIZE],json.size());
-        boost::asio::async_write(socket_, boost::asio::buffer(outbound_data_),no_handler());
+        boost::asio::async_write(ssl_socket_, boost::asio::buffer(outbound_data_),no_handler());
     }
     catch(std::exception& e)
     {

@@ -27,6 +27,7 @@ private:
     void start_read(boost::shared_ptr<Connection> connection);
     void finished_read(const boost::system::error_code& e, boost::shared_ptr<Connection> connection);
     void handle_accept(const boost::system::error_code& e, boost::shared_ptr<Connection> connection);
+    void handle_handshake(const boost::system::error_code& e, boost::shared_ptr<Connection> connection);
 
     void interpret(const Json::Value& val, boost::shared_ptr<Connection> connection);
 

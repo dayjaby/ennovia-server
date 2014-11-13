@@ -11,7 +11,7 @@ Server::Server(boost::asio::io_service& io_service, unsigned short port): accept
     // Start an accept operation for a new connection.
     boost::shared_ptr<Connection> new_conn(new Connection(acceptor_.get_io_service()));
     std::cout << "async accept" << std::endl;
-    acceptor_.async_accept(new_conn->socket(),
+    acceptor_.async_accept(new_conn->ssl_socket().lowest_layer(),
                            boost::bind(&Server::handle_accept, this,
                                        boost::asio::placeholders::error, new_conn));
 }
@@ -52,8 +52,14 @@ void Server::handle_accept(const boost::system::error_code& e, boost::shared_ptr
     std::cout << "Handle accept" << std::endl;
     if (!e)
     {
-        start_read(connection);
-        Governor::get().onClientConnected(connection);
+        connection->ssl_context().set_options(boost::asio::ssl::context::default_workarounds
+                                            | boost::asio::ssl::context::no_sslv2
+                                            | boost::asio::ssl::context::single_dh_use);
+        connection->ssl_context().use_certificate_chain_file("ennovia.cert");
+        connection->ssl_context().use_private_key_file("ennovia.key", boost::asio::ssl::context::pem);
+        connection->ssl_context().use_tmp_dh_file("dh512.pem");
+        connection->ssl_socket().async_handshake(boost::asio::ssl::stream_base::server,
+                                                 boost::bind(&Server::handle_handshake,this,boost::asio::placeholders::error, connection));
     }
 
     // Start an accept operation for a new connection.
@@ -62,6 +68,17 @@ void Server::handle_accept(const boost::system::error_code& e, boost::shared_ptr
                            boost::bind(&Server::handle_accept, this,
                                        boost::asio::placeholders::error, new_conn));
 }
+
+void Server::handle_handshake(const boost::system::error_code& e, boost::shared_ptr<Connection> connection)
+{
+    std::cout << "Handle handhsake" << std::endl;
+    if (!e)
+    {
+        start_read(connection);
+        Governor::get().onClientConnected(connection);
+    }
+}
+
 
 void Server::interpret(const Json::Value& in, boost::shared_ptr<Connection> connection)
 {
@@ -89,7 +106,7 @@ void Server::interpret(const Json::Value& in, boost::shared_ptr<Connection> conn
         break;
         case WALK_TO:
         {
-            governor.walkTo(connection,in["x"].asFloat(),in["y"].asFloat());
+            governor.walkTo(connection,in["x"].asInt()/100.0f,in["y"].asInt()/100.0f);
         }
         break;
         case CHOOSE_OPTION:

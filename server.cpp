@@ -10,8 +10,12 @@ using namespace Ennovia;
 
 int main(int argc, char* argv[])
 {
-    Governor& gov = Governor::get();
-    gov.run();
+    try {
+        Governor& gov = Governor::get();
+        gov.run();
+    } catch(std::exception& e) {
+        std::cout << e.what() << std::endl;
+    }
     return 0;
 }
 

@@ -6,6 +6,7 @@ namespace Ennovia {
 
     void Action::onTick() {}
     void ActionList::tick() {
+        std::cout << "tick()" << std::endl;
         for(Actions::iterator i = actions.begin();i != actions.end();i++) {
             boost::shared_ptr<Action> action = *i;
             std::cout << action->getTicks() << ">=" << action->getDuration() << std::endl;
@@ -30,7 +31,7 @@ Move::Move(Locatable* performer,const Position& start,const Position& end)
         float dy = end.y - start.y;
         distance = std::sqrt(dx*dx+dy*dy);
         float movement = performer->getMovementSpeed();
-        if(distance == 0) {
+        if(distance == 0 || movement == 0) {
             duration = 0;
             dX = 0;
             dY = 0;
@@ -48,7 +49,7 @@ Move::Move(Locatable* performer,const Position& start,const Position& end)
         pos.x += dX;
         pos.y += dY;
         performer->setPosition(pos);
-        //Governor::get().updateLocatablePosition(performer);
+        Governor::get().updateLocatablePosition(performer);
     }
     void Move::onFinish() {
     }

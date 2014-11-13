@@ -5,6 +5,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #include <boost/function.hpp>
 #include <iomanip>
 #include <string>
@@ -32,10 +33,21 @@ public:
     typedef boost::function<void(Json::Value&)> Handler;
 
     Connection(boost::asio::io_service& io_service)
-        : socket_(io_service)
+    : ssl_context_(boost::asio::ssl::context::sslv23)
+    , socket_(io_service)
+    , ssl_socket_(socket_,ssl_context_)
     {
     }
 
+    boost::asio::ssl::context& ssl_context()
+    {
+        return ssl_context_;
+    }
+
+    boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>& ssl_socket()
+    {
+        return ssl_socket_;
+    }
 
     boost::asio::ip::tcp::socket& socket()
     {
@@ -66,7 +78,9 @@ private:
     Json::FastWriter writer;
 
     /// The underlying socket.
+    boost::asio::ssl::context ssl_context_;
     boost::asio::ip::tcp::socket socket_;
+    boost::asio::ssl::stream<boost::asio::ip::tcp::socket&> ssl_socket_;
 
     enum { HEADER_SIZE = 4, MAX_PACKAGE_SIZE = 2048 };
     std::vector<char> outbound_data_;

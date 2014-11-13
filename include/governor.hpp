@@ -5,6 +5,7 @@
 #include <memory>
 #include "network/network.hpp"
 
+
 namespace Ennovia {
 class GovernorImpl;
 class Locatable;
