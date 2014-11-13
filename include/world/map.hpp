@@ -4,16 +4,14 @@
 #include <boost/multi_array.hpp>
 #include <vector>
 #include <sstream>
-#include "misc/astar/stlastar.h"
-#include "world/entity.hpp"
-#include "world/position.hpp"
-#include "world/object.hpp"
+#include <set>
+//#include "misc/astar/stlastar.h"
 
 
 namespace Ennovia
 {
 
-class Tile;
+class Locatable;
 class Map
 {
 public:

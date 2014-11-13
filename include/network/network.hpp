@@ -4,12 +4,10 @@
 #include "network/connection.hpp"
 #include "network/message.hpp"
 #include "network/server.hpp"
-#include "network/client.hpp"
 
 namespace Ennovia {
     typedef boost::shared_ptr<Connection> ServerConnection;
     typedef boost::shared_ptr<Connection> ClientConnection;
-
 
 }
 #endif

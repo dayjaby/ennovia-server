@@ -5,86 +5,88 @@ namespace Ennovia
 
 void Connection::async_read(ErrorHandler errorHandler, Handler handler, boost::shared_ptr<Connection> conn)
 {
-
-    boost::asio::async_read(socket_, boost::asio::buffer(inbound_header_),
+    boost::asio::async_read(socket_,boost::asio::buffer(inbound_header_,4),
+    //boost::asio::async_read(socket_,boost::asio::buffer(inbound_buffer_),
                             boost::bind(&Connection::handle_read_header,
-                                        this, boost::asio::placeholders::error,
+                                        this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred,
                                         boost::make_tuple(errorHandler,handler),conn));
 }
 
-void Connection::handle_read_header(const boost::system::error_code& e,
+void Connection::handle_read_header(const boost::system::error_code& e, size_t bytes_transferred,
+                                    boost::tuple<ErrorHandler,Handler> handler, boost::shared_ptr<Connection> conn)
+{
+
+    try
+    {
+        if (e)
+        {
+            boost::get<0>(handler)(e);
+        }
+        else
+        {
+            int sz = inbound_header_[3];
+                sz = (sz << 8) | inbound_header_[2];
+                sz = (sz << 8) | inbound_header_[1];
+                sz = (sz << 8) | inbound_header_[0];
+            std::cout << "Size " << sz << std::endl;
+            inbound_data_.resize(sz);
+            boost::asio::async_read(socket_,boost::asio::buffer(inbound_buffer_),
+                            boost::bind(&Connection::handle_read,
+                                        this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred,
+                                        handler,conn));
+        }
+    } catch(std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
+}
+
+void Connection::handle_read(const boost::system::error_code& e, size_t bytes_transferred,
                                     boost::tuple<ErrorHandler,Handler> handler, boost::shared_ptr<Connection> conn)
 
 {
-    if (e)
+    try
     {
-        boost::get<0>(handler)(e);
-    }
-    else
-    {
-        // Determine the length of the serialized data.
-        std::istringstream is(std::string(inbound_header_, header_length));
-        std::size_t inbound_data_size = 0;
-        MessageHeader msg;
-        int x = is.tellg();
-        msg.ParseFromIstream(&is);
-        is.seekg(header_length);
-
-        inbound_data_size = msg.size();
-
-        // Start an asynchronous call to receive the data.
-        inbound_data_.resize(inbound_data_size);
-        boost::asio::async_read(socket_, boost::asio::buffer(inbound_data_),
-                                boost::bind(&Connection::handle_read_data, this, msg,
-                                            boost::asio::placeholders::error, handler, conn));
-    }
-}
-
-void Connection::handle_read_data(MessageHeader msg, const boost::system::error_code& e,
-                                  boost::tuple<ErrorHandler,Handler> handler, boost::shared_ptr<Connection> conn)
-{
-    if (e)
-    {
-        boost::get<0>(handler)(e);
-    }
-    else
-    {
-
-        // Extract the data structure from the data just received.
-        try
+        if (!e)
         {
             std::string archive_data(&inbound_data_[0], inbound_data_.size());
-            std::istringstream archive_stream(archive_data);
-            //boost::archive::binary_iarchive archive(archive_stream);
-            boost::get<1>(handler)(msg.id(),archive_stream);
+            Json::Value value;
+            std::cout << archive_data << std::endl;
+            if(reader.parse(archive_data,value))
+            {
+                boost::get<1>(handler)(value);
+            }
         }
-        catch (std::exception& e)
-        {
-            // Unable to decode data.
-            boost::system::error_code error(boost::asio::error::invalid_argument);
-            boost::get<0>(handler)(error);
-            return;
-        }
-
-        // Inform caller that data has been received ok.
         boost::get<0>(handler)(e);
+    }
+    catch(std::exception& e)
+    {
+        std::cout << "Connection::handle_read_header: " << e.what() << std::endl;
     }
 }
 
-void Connection::writeStringStream(int msgid, std::ostringstream& os)
+void Connection::write_(Json::Value val)
 {
-    static const char* placeholder = "XXXXXXXXXXXX";
-    std::ostringstream header_stream;
-    header_stream.write(placeholder,header_length);
-    header_stream.seekp(0);
-
-    MessageHeader msg;
-    msg.set_size(os.tellp());
-    msg.set_id(msgid);
-    msg.SerializeToOstream(&header_stream);
-    outbound_data_ = header_stream.str();
-    outbound_data_ += os.str();
-    boost::asio::async_write(socket_, boost::asio::buffer(outbound_data_,outbound_data_.size()),no_handler());
+    try
+    {
+        std::string json = writer.write(val);
+        std::cout << json.size() << ":" << json << std::endl;
+        outbound_data_.resize(HEADER_SIZE);
+        int sz = json.size();
+        outbound_data_[0] = sz & 255;
+        sz >>= 8;
+        outbound_data_[1] = sz & 255;
+        sz >>= 8;
+        outbound_data_[2] = sz & 255;
+        sz >>= 8;
+        outbound_data_[3] = sz & 255;
+        outbound_data_.insert(outbound_data_.end(),json.begin(),json.end());
+        //json.copy(&inbound_data_[HEADER_SIZE],json.size());
+        boost::asio::async_write(socket_, boost::asio::buffer(outbound_data_),no_handler());
+    }
+    catch(std::exception& e)
+    {
+        std::cout << "Connection::write: " << e.what() << std::endl;
+    }
 }
 
 }

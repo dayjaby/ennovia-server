@@ -15,11 +15,10 @@ public:
     Client(boost::asio::io_service& io_service,
            std::string host, std::string service);
 
-    template <int msgid, typename Type>
-    void write(Type& t)
+    template <typename Type>
+    void write(Type t)
     {
-        std::cout << "Write message " << msgid << std::endl;
-        connection->write<msgid>(t);
+        connection->write(t);
     }
 
     boost::shared_ptr<Connection> connection;

@@ -21,6 +21,7 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 			<Add directory="include" />
+			<Add directory="/usr/include/lua5.1" />
 		</Compiler>
 		<Linker>
 			<Add library="luabind" />
@@ -28,72 +29,42 @@
 			<Add library="boost_system" />
 			<Add library="boost_serialization" />
 			<Add library="lua5.1" />
-			<Add library="protobuf" />
+			<Add library="mongoclient" />
+			<Add library="boost_thread" />
+			<Add library="boost_filesystem" />
 			<Add directory="src" />
 		</Linker>
-		<Unit filename="client.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="include/core.hpp" />
 		<Unit filename="include/governor.hpp" />
-		<Unit filename="include/mayor.hpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="include/misc/CGUITTFont.h" />
 		<Unit filename="include/misc/astar/fsa.h" />
 		<Unit filename="include/misc/astar/stlastar.h" />
-		<Unit filename="include/misc/irrlicht.hpp" />
-		<Unit filename="include/misc/otlv4.h" />
-		<Unit filename="include/misc/registry.hpp" />
-		<Unit filename="include/misc/switch.hpp" />
-		<Unit filename="include/misc/switch_impl.hpp" />
 		<Unit filename="include/network/client.hpp" />
 		<Unit filename="include/network/connection.hpp" />
 		<Unit filename="include/network/message.hpp" />
 		<Unit filename="include/network/network.hpp" />
-		<Unit filename="include/network/proto/client.pb.cc" />
 		<Unit filename="include/network/proto/client.pb.h" />
 		<Unit filename="include/network/proto/client.proto" />
 		<Unit filename="include/network/proto/db.proto" />
-		<Unit filename="include/network/proto/msg.pb.cc" />
 		<Unit filename="include/network/proto/msg.pb.h" />
 		<Unit filename="include/network/proto/msg.proto" />
-		<Unit filename="include/network/proto/server.pb.cc" />
 		<Unit filename="include/network/proto/server.pb.h" />
 		<Unit filename="include/network/proto/server.proto" />
 		<Unit filename="include/network/server.hpp" />
 		<Unit filename="include/neural/layer.hpp" />
 		<Unit filename="include/neural/network.hpp" />
 		<Unit filename="include/neural/sigmoid.hpp" />
-		<Unit filename="include/plugins/Chest.hpp" />
-		<Unit filename="include/plugins/GUIPlugin.hpp" />
-		<Unit filename="include/ui/eventreceiver.hpp" />
-		<Unit filename="include/ui/graphics.hpp" />
-		<Unit filename="include/ui/render.hpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="include/ui/windows/window.hpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="include/world/actions.hpp" />
 		<Unit filename="include/world/container.hpp" />
-		<Unit filename="include/world/database.cpp" />
 		<Unit filename="include/world/database.hpp" />
 		<Unit filename="include/world/entity.hpp" />
 		<Unit filename="include/world/factory.hpp" />
-		<Unit filename="include/world/items.hpp" />
-		<Unit filename="include/world/library.hpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="include/world/livingobject.hpp" />
+		<Unit filename="include/world/filter.hpp" />
+		<Unit filename="include/world/library.hpp" />
 		<Unit filename="include/world/locatable.hpp" />
 		<Unit filename="include/world/lua/manager.hpp" />
 		<Unit filename="include/world/map.hpp" />
-		<Unit filename="include/world/object.hpp" />
-		<Unit filename="include/world/objects.hpp" />
-		<Unit filename="include/world/player.hpp" />
+		<Unit filename="include/world/optionlist.hpp" />
 		<Unit filename="include/world/position.hpp" />
-		<Unit filename="include/world/tile.hpp" />
 		<Unit filename="lua/actions.lua" />
 		<Unit filename="lua/containers.lua" />
 		<Unit filename="lua/core.lua" />
@@ -104,13 +75,6 @@
 		<Unit filename="lua/potions.lua" />
 		<Unit filename="server.cpp" />
 		<Unit filename="src/governor.cpp" />
-		<Unit filename="src/mayor.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="src/misc/registry.cpp" />
-		<Unit filename="src/network/client.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="src/network/connection.cpp" />
 		<Unit filename="src/network/proxies.cpp" />
 		<Unit filename="src/network/server.cpp" />
@@ -122,23 +86,17 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="src/world/entity.cpp" />
-		<Unit filename="src/world/inventory.cpp" />
-		<Unit filename="src/world/items.cpp" />
 		<Unit filename="src/world/library.cpp" />
-		<Unit filename="src/world/livingobject.cpp" />
 		<Unit filename="src/world/locatable.cpp" />
 		<Unit filename="src/world/lua/manager.cpp" />
 		<Unit filename="src/world/map.cpp" />
-		<Unit filename="src/world/objects.cpp" />
 		<Unit filename="src/world/optionlist.cpp" />
 		<Unit filename="src/world/optionproxy.cpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="src/world/player.cpp" />
 		<Unit filename="src/world/position.cpp" />
 		<Unit filename="src/world/server/actions/move.cpp" />
 		<Unit filename="src/world/server/locatable.cpp" />
-		<Unit filename="src/world/tile.cpp" />
 		<Extensions>
 			<code_completion />
 			<debugger />

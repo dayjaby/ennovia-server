@@ -2,30 +2,25 @@
 #define ENNOVIA_GOVERNOR_HPP
 
 #include <fstream>
+#include <memory>
 #include "network/network.hpp"
-#include "world/library.hpp"
-#include "world/lua/manager.hpp"
-#include "world/actions.hpp"
 
 namespace Ennovia {
-class Database;
+class GovernorImpl;
+class Locatable;
+class LocatableContainer;
+class MapContainer;
+class OptionListContainer;
+class ConnectionContainer;
 class Governor {
 public:
     Governor();
-    ~Governor();
-    static Governor& get() {
-        static Governor instance;
-        return instance;
-    }
-
-    Database* getDB() { return db; }
+    static Governor& get();
 
     std::ofstream log;
-    bool alive;
+    bool isAlive();
     void run();
-    void tick();
-
-    int getTicks() { return ticks; }
+    int getTicks();
 
     /** Interface for the world **/
     void updateLocatablePosition(Locatable* locatable);
@@ -34,11 +29,8 @@ public:
 
     /** Interface for the network **/
     void onClientConnected(ServerConnection connection);
-    void getTileOptionList(ServerConnection connection,int map,int x,int y);
     void getLocatableOptionList(ServerConnection connection,int id);
     void walkTo(ServerConnection connection,float x,float y);
-
-    void getLivingObjectOptionList(ServerConnection connection,int optionlist,int id);
     void chooseOption(ServerConnection,int optionlist,int id);
     void getLocatablePosition(ServerConnection connection,int id);
     void getLocatableIntroduction(ServerConnection connection,int id);
@@ -46,26 +38,12 @@ public:
     void login(ServerConnection connection, const std::string& username, const std::string& password);
 
     void requestMap(ServerConnection connection,int id);
-
+    ConnectionContainer& getConnections();
+    MapContainer& getMaps();
+    LocatableContainer& getLocatables();
+    OptionListContainer& getOptionLists();
 private:
-    Database* db;
-    Lua::Manager lua;
-
-    ActionList actionList;
-
-    void sendTileOptionList(ServerConnection connection,reg<Map> map,int x,int y);
-    void sendLocatableOptionList(ServerConnection connection,reg<Locatable> locatable);
-    void introduceAllLocatables(ServerConnection connection,int id);
-
-    boost::asio::io_service io_service;
-    boost::asio::deadline_timer timer;
-    int ticks;
-    std::map<Player*,ServerConnection> connections;
-    std::map<std::string,int> players;
-    Server server;
-
-    /** Library **/
-    Library library;
+    std::auto_ptr<GovernorImpl> d;
 };
 
 }

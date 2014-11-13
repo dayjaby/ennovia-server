@@ -1,7 +1,6 @@
 #ifndef ENNOVIA_CORE_HPP
 #define ENNOVIA_CORE_HPP
 
-#include "misc/irrlicht.hpp"
 #include <boost/shared_ptr.hpp>
 #include <sstream>
 

@@ -2,12 +2,12 @@
 #define ENNOVIA_ENTITY_HPP
 
 namespace Ennovia {
-    class LivingObject;
+    class Locatable;
     class OptionList;
     class Entity {
     public:
         virtual ~Entity() {}
-        virtual OptionList* getOptionList(LivingObject* o);
+        virtual OptionList* getOptionList(Locatable* o);
 
         /*virtual bool isLocatable() { return false; }
         virtual bool isLiving() { return false; }

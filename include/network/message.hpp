@@ -1,9 +1,6 @@
 #ifndef ENNOVIA_MESSAGE_HPP
 #define ENNOVIA_MESSAGE_HPP
 
-#include "network/proto/client.pb.h"
-#include "network/proto/server.pb.h"
-
 namespace Ennovia
 {
     /** Server -> Client Messages **/
@@ -45,8 +42,6 @@ namespace Ennovia
         /** Maps **/
         REQUEST_MAP = 400
     };
-
-
 }
 
 #endif

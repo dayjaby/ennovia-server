@@ -11,8 +11,7 @@
 #include <sstream>
 #include <vector>
 
-#include "misc/registry.hpp"
-#include "network/proto/msg.pb.h"
+#include <misc/json/json.h>
 
 namespace Ennovia
 {
@@ -30,7 +29,7 @@ class Connection
 {
 public:
     typedef boost::function<void(const boost::system::error_code&)> ErrorHandler;
-    typedef boost::function<void(int,std::istream&)> Handler;
+    typedef boost::function<void(Json::Value&)> Handler;
 
     Connection(boost::asio::io_service& io_service)
         : socket_(io_service)
@@ -48,55 +47,34 @@ public:
         socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
     }
 
-    template <int msgid,class Type>
-    void write(Type& t)
-
+    void write(Json::Value val)
     {
-        std::ostringstream archive_stream;
-        t.SerializeToOstream(&archive_stream);
-        writeStringStream(msgid,archive_stream);
+        write_(val);
     }
 
-    template <int msgid>
-    void write()
-
-    {
-        std::ostringstream archive_stream;
-        writeStringStream(msgid,archive_stream);
-    }
 
     void async_read(ErrorHandler errorHandler, Handler handler, boost::shared_ptr<Connection> conn);
-
-    void handle_read_header(const boost::system::error_code& e,
+    void handle_read_header(const boost::system::error_code& e, size_t bytes_transferred,
                             boost::tuple<ErrorHandler,Handler> handler, boost::shared_ptr<Connection> conn);
-
-
-    void handle_read_data(MessageHeader msg, const boost::system::error_code& e,
-                          boost::tuple<ErrorHandler,Handler> handler, boost::shared_ptr<Connection> conn);
-    reg<Player> player;
-
+    void handle_read(const boost::system::error_code& e, size_t bytes_transferred,
+                            boost::tuple<ErrorHandler,Handler> handler, boost::shared_ptr<Connection> conn);
 private:
 
-    void writeStringStream(int msgid, std::ostringstream&  ostream);
+    void write_(Json::Value val);
 
+    Json::Reader reader;
+    Json::FastWriter writer;
 
     /// The underlying socket.
     boost::asio::ip::tcp::socket socket_;
 
-    /// The size of a fixed length header.
-    enum { header_length = 8 };
-
-    /// Holds an outbound header.
-    std::string outbound_header_;
-
-    /// Holds the outbound data.
-    std::string outbound_data_;
-
-    /// Holds an inbound header.
-    char inbound_header_[header_length];
+    enum { HEADER_SIZE = 4, MAX_PACKAGE_SIZE = 2048 };
+    std::vector<char> outbound_data_;
 
     /// Holds the inbound data.
+    char inbound_header_[HEADER_SIZE];
     std::vector<char> inbound_data_;
+    std::vector<char> inbound_buffer_;
 };
 
 

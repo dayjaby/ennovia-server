@@ -3,9 +3,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include "governor.hpp"
-#include "world/player.hpp"
-#include "world/optionlist.hpp"
-#include "misc/registry.hpp"
+
 using namespace Ennovia;
 
 

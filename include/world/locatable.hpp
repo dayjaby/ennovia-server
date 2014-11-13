@@ -5,7 +5,6 @@
 #include "world/entity.hpp"
 #include "world/position.hpp"
 #include "world/actions.hpp"
-#include "world/inventory.hpp"
 
 namespace Ennovia
 {
@@ -16,10 +15,9 @@ public:
     Locatable(const Position& pos, const std::string& name_);
     virtual ~Locatable();
 
-    virtual OptionList* getOptionList(LivingObject* p);
+    virtual OptionList* getOptionList(Locatable* p);
     virtual std::string getName();
-    Inventory& inventory() {return inventory_; }
-    virtual std::string onExamine(LivingObject* o);
+    virtual std::string onExamine(Locatable* o);
 
     const Position& getPosition() const {return position_; }
     void setPosition(const Position& position);
@@ -35,7 +33,6 @@ public:
     ActionList actions;
     boost::shared_ptr<Action> currentAction;
 
-  //  virtual bool isLocatable() { return true; }
 protected:
 
     Position position_;
@@ -45,7 +42,6 @@ protected:
     unsigned actionEnd;
 
     std::string name;
-    Inventory inventory_;
 };
 }
 #endif

@@ -15,11 +15,10 @@ public:
 
     Server(boost::asio::io_service& io_service, unsigned short port);
 
-    template <int msgid, typename Type>
-    void write(boost::shared_ptr<Connection> connection, Type& t)
+    template <class T>
+    void write(boost::shared_ptr<Connection> connection, T msg)
     {
-        std::cout << "Write message " << msgid << std::endl;
-        connection->write<msgid>(t);
+        connection->write(msg);
     }
 
 
@@ -29,7 +28,7 @@ private:
     void finished_read(const boost::system::error_code& e, boost::shared_ptr<Connection> connection);
     void handle_accept(const boost::system::error_code& e, boost::shared_ptr<Connection> connection);
 
-    void interpret(int msgid, std::istream& is, boost::shared_ptr<Connection> connection);
+    void interpret(const Json::Value& val, boost::shared_ptr<Connection> connection);
 
     boost::asio::ip::tcp::acceptor acceptor_;
 };

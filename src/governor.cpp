@@ -1,62 +1,127 @@
 #include "governor.hpp"
 #include "core.hpp"
 #include "world/map.hpp"
-#include "world/tile.hpp"
 #include "world/optionlist.hpp"
-#include "world/player.hpp"
 #include "world/database.hpp"
+#include "world/lua/manager.hpp"
+#include "world/library.hpp"
+#include "world/actions.hpp"
+#include "world/locatable.hpp"
 
-namespace Ennovia {
-
-Governor::Governor() :
-    db(new Database("tcp://127.0.0.1:3306","root","")), log("server_log.txt"),
-    timer(io_service, boost::posix_time::milliseconds(TICK)),
-    server(io_service,PORT)
+namespace Ennovia
 {
+
+struct GovernorImpl
+{
+    GovernorImpl(Governor& gov);
+    ~GovernorImpl();
+    bool alive;
+    void run();
+    void tick();
+
+    int getTicks()
+    {
+        return ticks;
+    }
+
+    /** Interface for the world **/
+    void updateLocatablePosition(Locatable* locatable);
+    void moveLocatable(int id,float x,float y);
+    void writeMessage(int id,const std::string& msg);
+
+    /** Interface for the network **/
+    void onClientConnected(ServerConnection connection);
+    void getTileOptionList(ServerConnection connection,int map,int x,int y);
+    void getLocatableOptionList(ServerConnection connection,int id);
+    void walkTo(ServerConnection connection,float x,float y);
+
+    void chooseOption(ServerConnection,int optionlist,int id);
+    void getLocatablePosition(ServerConnection connection,int id);
+    void getLocatableIntroduction(ServerConnection connection,int id);
+
+    void login(ServerConnection connection, const std::string& username, const std::string& password);
+
+    void requestMap(ServerConnection connection,int id);
+
+    Governor& governor;
+    ConnectionContainer connections;
+    OptionListContainer optionLists;
+    LocatableContainer locatables;
+    MapContainer maps;
+
+    ActionList actionList;
+
+    void sendLocatableOptionList(ServerConnection connection,int locatable);
+    void introduceAllLocatables(ServerConnection connection,int id);
+
+    boost::asio::io_service io_service;
+    boost::asio::deadline_timer timer;
+    int ticks;
+    std::map<std::string,int> players;
+    Server server;
+
+    Lua::Manager lua;
+};
+
+GovernorImpl::GovernorImpl(Governor& gov) :
+    governor(gov),
+    //db(new Database("tcp://127.0.0.1:3306","root","")),
+    timer(io_service, boost::posix_time::milliseconds(TICK)),
+    server(io_service,PORT),ticks(0)
+{
+    std::cout << "GovernorImpl constructed" << std::endl;
 }
 
-Governor::~Governor() {
-    delete db;
+GovernorImpl::~GovernorImpl()
+{
+    //delete db;
 }
 
-void Governor::run() {
+void GovernorImpl::run()
+{
     io_service.run();
     alive = true;
     tick();
 }
 
-void Governor::tick()
+void GovernorImpl::tick()
 {
-    if(alive) {
+    if(alive)
+    {
         ticks++;
         timer.expires_at(timer.expires_at() + boost::posix_time::milliseconds(TICK));
-        timer.async_wait(boost::bind(&Governor::tick, this));
+        timer.async_wait(boost::bind(&GovernorImpl::tick, this));
 
         actionList.tick();
 
-      //  server.write<Client::SEND_ENTITIES>(player,...);
+        //  server.write<Client::SEND_ENTITIES>(player,...);
     }
 }
 
-void Governor::updateLocatablePosition(Locatable* locatable_) {
-    if(locatable_) {
-        log << "UPDATE LOCATABLE THAT EXISTS" << std::endl;
-        reg<Locatable> locatable(locatable_);
-        reg<Map> map(locatable->getPosition().map);
-        LocatablePosition position;
-        position.set_id(locatable.id());
-        position.set_map(map.id());
-        position.set_x(locatable->getPosition().x);
-        position.set_y(locatable->getPosition().y);
+void GovernorImpl::updateLocatablePosition(Locatable* locatable)
+{
+    int id = locatables.get(locatable);
+    if(id)
+    {
+        governor.log << "UPDATE LOCATABLE THAT EXISTS" << std::endl;
+        Map* map = locatable->getPosition().map;
+        int mapid = maps.get(locatable->getPosition().map);
+        Json::Value msg(Json::objectValue);
+        msg["msg"] = LOCATABLE_POSITION;
+        msg["id"] = id;
+        msg["mapid"] = mapid;
+        msg["x"] = locatable->getPosition().x;
+        msg["y"] = locatable->getPosition().y;
 
         typedef std::set<Locatable*>::iterator Iterator;
-        for(Iterator i = map->locatables.begin(); i != map->locatables.end(); ++i) {
-            if((*i)->getPosition().map == map) {
-                reg<Player> player = library.getPlayer(locatable.id());
-                if(player.exists()) {
-
-                    connections[player.get()]->write<LOCATABLE_POSITION>(position);
-                    log << "sent message to " << locatable.id() << std::endl;
+        for(Iterator i = map->locatables.begin(); i != map->locatables.end(); ++i)
+        {
+            if((*i)->getPosition().map == map)
+            {
+                ServerConnection connection = connections.get(id);
+                if(connection.get())
+                {
+                    connection->write(msg);
                 }
             }
         }
@@ -65,214 +130,345 @@ void Governor::updateLocatablePosition(Locatable* locatable_) {
 }
 
 
-void Governor::moveLocatable(int id,float x,float y) {
-    reg<Locatable> locatable(id);
-    if(locatable.exists()) {
-        log << "MOVE LOCATABLE THAT EXISTS" << std::endl;
-        reg<Map> map(locatable->getPosition().map);
-        actionList.add(new Move(locatable.get(),locatable->getPosition(),Position(x,y,map.get())));
-        log << "movement added to list" << std::endl;
-        MoveTo msg;
-        msg.set_id(id);
-        msg.set_x(x);
-        msg.set_y(y);
-        if(library.isPlayer(id)) {
-            connections[library.getPlayer(id).get()]->write<MOVE_TO>(msg);
+void GovernorImpl::moveLocatable(int id,float x,float y)
+{
+    Locatable* locatable = locatables.get(id);
+    if(locatable)
+    {
+        governor.log << "MOVE LOCATABLE THAT EXISTS" << std::endl;
+        Map* map = locatable->getPosition().map;
+        actionList.add(new Move(locatable,locatable->getPosition(),Position(x,y,map)));
+        governor.log << "movement added to list" << std::endl;
+        Json::Value msg(Json::objectValue);
+        msg["msg"] = MOVE_TO;
+        msg["id"] = id;
+        msg["x"] = x;
+        msg["y"] = y;
+        ServerConnection connection = connections.get(id);
+        if(connection.get())
+        {
+            connection->write(msg);
         }
         typedef std::set<Locatable*>::iterator Iterator;
-        for(Iterator i = map->locatables.begin(); i != map->locatables.end(); ++i) {
+        for(Iterator i = map->locatables.begin(); i != map->locatables.end(); ++i)
+        {
             Locatable* loc = *i;
-            if(loc->getPosition().map == map.get()) {
-                reg<Locatable> loc_(loc);
-                reg<Player> player = library.getPlayer(loc_.id());
-                if(player.exists()) {
-                    connections[player.get()]->write<MOVE_TO>(msg);
-                    log << "sent message to " << loc_.id() << std::endl;
+            if(loc->getPosition().map == map)
+            {
+                int locatable_id = locatables.get(loc);
+                ServerConnection locatable_connection = connections.get(locatable_id);
+                if(locatable_connection.get() && locatable_connection.get() != connection.get())
+                {
+                    locatable_connection->write(msg);
                 }
             }
         }
     }
 }
 
-void Governor::writeMessage(int id,const std::string& msg) {
-    reg<Player> player(id);
-    if(player.exists()) {
-        ServerMessage response;
-        response.set_text(msg);
-        connections[player.get()]->write<SEND_MESSAGE>(response);
+void GovernorImpl::writeMessage(int id,const std::string& msg)
+{
+    ServerConnection connection = connections.get(id);
+    if(connection.get())
+    {
+        Json::Value out(Json::objectValue);
+        out["msg"] = SEND_MESSAGE;
+        out["text"] = msg;
+        connection->write(out);
     }
 }
 
-void Governor::onClientConnected(ServerConnection connection) {
-    ServerMessage response;
-    response.set_text("Welcome to our server!");
-    connection->write<SEND_MESSAGE>(response);
-    connection->write<REQUEST_CREDENTIALS>();
+void GovernorImpl::onClientConnected(ServerConnection connection)
+{
+    Json::Value out(Json::objectValue);
+    out["msg"] = SEND_MESSAGE;
+    out["text"] = "Welcome to our server!";
+    connection->write(out);
+    Json::Value request(Json::objectValue);
+    request["msg"] = REQUEST_CREDENTIALS;
+    connection->write(request);
 }
 
-void Governor::getTileOptionList(ServerConnection connection,int mapid,int x,int y) {
-    reg<Map> map(mapid);
-    if(map.exists()) {
-        sendTileOptionList(connection,map,x,y);
-    }
+void GovernorImpl::getLocatableOptionList(ServerConnection connection,int id)
+{
+    sendLocatableOptionList(connection,id);
 }
 
-void Governor::getLocatableOptionList(ServerConnection connection,int id) {
-    reg<Locatable> locatable = library.getLocatable(id);
-    if(locatable.exists())
-        sendLocatableOptionList(connection,locatable);
-}
-
-void Governor::walkTo(ServerConnection connection,float x,float y) {
+void GovernorImpl::walkTo(ServerConnection connection,float x,float y)
+{
     std::cout << "WALK TO " << x << "," << y << std::endl;
-    if(connection->player) {
-        moveLocatable(connection->player.id(),x,y);
+    int player_id = connections.get(connection);
+    moveLocatable(player_id,x,y);
+}
+
+
+
+void GovernorImpl::chooseOption(ServerConnection connection,int optionlist,int id)
+{
+    OptionList* list = optionLists.get(optionlist);
+    if(list)
+    {
+        int connection_id = connections.get(connection);
+        Locatable* locatable = locatables.get(connection_id);
+        if(locatable)
+            list->options[id]->onChoose(locatable);
     }
 }
 
-
-
-void Governor::chooseOption(ServerConnection connection,int optionlist,int id) {
-    reg<OptionList> list(optionlist);
-    if(list.exists())
-        list->options[id]->onChoose(connection->player);
-}
-
-void Governor::getLocatablePosition(ServerConnection connection,int id) {
-    reg<Locatable> locatable(id);
-    if(locatable.exists()) {
-        reg<Map> map(locatable->getPosition().map);
-        LocatablePosition position;
-        position.set_id(id);
-        position.set_map(map.id());
-        position.set_x(locatable->getPosition().x);
-        position.set_y(locatable->getPosition().y);
-        connection->write<LOCATABLE_POSITION>(position);
-    } else {
+void GovernorImpl::getLocatablePosition(ServerConnection connection,int id)
+{
+    Locatable* locatable = locatables.get(id);
+    if(locatable)
+    {
+        int mapid = maps.get(locatable->getPosition().map);
+        Json::Value position(Json::objectValue);
+        position["msg"] = LOCATABLE_POSITION;
+        position["id"] = id;
+        position["map"] = mapid;
+        position["x"] = locatable->getPosition().x;
+        position["y"] = locatable->getPosition().y;
+        connection->write(position);
+    }
+    else
+    {
         std::cout << id << "doesnt exist" << std::endl;
     }
 }
-void Governor::getLocatableIntroduction(ServerConnection connection,int id) {
-    IntroduceLocatable intro;
-    intro.set_id(id);
-    if(library.isPlayer(id)) {
-        intro.set_type(2);
-    } else if(library.isLivingObject(id)) {
-        intro.set_type(1);
-    } else if(library.isLocatable(id)) {
-        intro.set_type(0);
-
-    }
-    reg<Locatable> locatable(id);
-    if(locatable.exists()) {
-        intro.set_name(locatable->getName());
-        if(locatable->model().length()>0) {
-            intro.set_model(locatable->model());
-            if(locatable->texture().length()>0)
-                intro.set_texture(locatable->texture());
-        }
-        connection->write<INTRODUCE_LOCATABLE>(intro);
-    }
-}
-
-
-void Governor::login(ServerConnection connection,const std::string& username, const std::string& password) {
-    db->playerLogin(username,password);
-    if(username.compare("admin") == 0 || username.compare("beni") == 0) {
-            if(password.compare("lol") == 0) {
-                connection->write<LOGIN_VALID>();
-                reg<Player> player;
-                if(players.count(username) > 0 && library.isPlayer(players[username])) {
-                    // disconnect old connection
-                    player = library.getPlayer(players[username]);
-                    connections[player.get()]->disconnect();
-                } else {
-                    player = library.createPlayer(username);
-                    players[username] = player.id();
-                }
-                log << "Login: " << player.id();
-                player->model() = "faerie.md2";
-                player->texture() = "faerie2.bmp";
-                connection->player = player.get();
-                reg<Map> map(1);
-                if(map.exists()) {
-                    player->setPosition(Position(5,5,map.get()));
-
-                    log << "Introduce all locatables" << std::endl;
-                    introduceAllLocatables(connection,player.id());
-                    log << "Send you are " << player.id() << std::endl;
-                    YouAre youAre;
-                    youAre.set_id(player.id());
-                    connection->write<YOU_ARE>(youAre);
-
-                    getLocatablePosition(connection,player.id());
-                }
-                connections[player.get()] = connection;
-            } else {
-                connection->write<LOGIN_PASSWORD_INVALID>();
+void GovernorImpl::getLocatableIntroduction(ServerConnection connection,int id)
+{
+    Json::Value intro(Json::objectValue);
+    intro["msg"] = INTRODUCE_LOCATABLE;
+    intro["id"] = id;
+    intro["type"] = 0;
+    Locatable* locatable = locatables.get(id);
+    if(locatable)
+    {
+        intro["name"] = locatable->getName();
+        if(locatable->model().length()>0)
+        {
+            intro["model"] = locatable->model();
+            if(locatable->texture().length()>0) {
+                intro["texture"] = locatable->texture();
             }
-        } else {
-            connection->write<LOGIN_USERNAME_INVALID>();
+
         }
-}
-
-void Governor::requestMap(ServerConnection connection,int id) {
-    SendMapData msg;
-    reg<Map> map(id);
-    msg.set_id(id);
-    msg.set_path(map->path);
-    msg.set_heightmap(map->heightmappath);
-    msg.set_width(map->width);
-    msg.set_height(map->height);
-    connection->write<SEND_MAP>(msg);
-}
-
-void Governor::sendTileOptionList(ServerConnection connection,reg<Map> map,int x,int y) {
-/*    SendTileOptionList msg;
-    Position pos(x,y,map.get());
-    if(pos.isValid()) {
-        Tile* tile = pos.getTile();
-        reg<OptionList> optionlist(tile->getOptionList(connection->player));
-        msg.set_map(map.id());
-        msg.set_x(x);
-        msg.set_y(y);
-        int i=0;
-        for(OptionList::Options::iterator iter=optionlist->options.begin();iter!=optionlist->options.end();++iter,++i) {
-            OptionRef* optionRef = msg.add_options();
-            optionRef->set_index(i);
-            optionRef->set_description((*iter)->getDescription());
-            optionRef->set_optionlist(optionlist.id());
-        }
-        connection->write<SEND_TILE_OPTIONLIST>(msg);
-    }*/
-}
-
-void Governor::sendLocatableOptionList(ServerConnection connection,reg<Locatable> locatable) {
-    SendLocatableOptionList msg;
-    reg<OptionList> optionlist(locatable->getOptionList(connection->player));
-    msg.set_id(locatable.id());
-    int i=0;
-    for(OptionList::Options::iterator iter=optionlist->options.begin();iter!=optionlist->options.end();++iter,++i) {
-        OptionRef* optionRef = msg.add_options();
-        optionRef->set_index(i);
-        optionRef->set_description((*iter)->getDescription());
-        optionRef->set_optionlist(optionlist.id());
+        connection->write(intro);
     }
-    connection->write<SEND_LOCATABLE_OPTIONLIST>(msg);
 }
 
-void Governor::introduceAllLocatables(ServerConnection connection,int id) {
-    reg<Locatable> locatable(id);
-    if(locatable.exists()) {
+
+void GovernorImpl::login(ServerConnection connection,const std::string& username, const std::string& password)
+{
+    /// TODO: LUA
+    //db->playerLogin(username,password);
+    Json::Value answer(Json::objectValue);
+    if(username.compare("admin") == 0 || username.compare("beni") == 0)
+    {
+        if(password.compare("lol") == 0)
+        {
+            answer["msg"] = LOGIN_VALID;
+            connection->write(answer);
+            Locatable* player;
+            int player_id;
+            if(players.count(username) > 0)
+            {
+                player_id = players[username];
+                player = locatables.get(player_id);
+                if(player)
+                {
+                    ServerConnection old_connection = connections.get(player_id);
+                    old_connection->disconnect();
+                }
+            }
+            else
+            {
+                player_id = locatables.create(username);
+                players[username] = player_id;
+                player = locatables.get(player_id);
+            }
+            governor.log << "Login: " << player_id;
+            player->model() = "faerie.md2";
+            player->texture() = "faerie2.bmp";
+            Map* map = maps.get(1);
+            if(map)
+            {
+                player->setPosition(Position(5,5,map));
+                governor.log << "Introduce all locatables" << std::endl;
+                introduceAllLocatables(connection,player_id);
+                governor.log << "Send you are " << player_id << std::endl;
+                Json::Value youAre(Json::objectValue);
+                youAre["msg"] = YOU_ARE;
+                youAre["id"] = player_id;
+                connection->write(youAre);
+
+                getLocatablePosition(connection,player_id);
+            }
+            connections.create(player_id,connection);
+        }
+        else
+        {
+            answer["msg"] = LOGIN_PASSWORD_INVALID;
+            connection->write(answer);
+        }
+    }
+    else
+    {
+        answer["msg"] = LOGIN_USERNAME_INVALID;
+        connection->write(answer);
+    }
+}
+
+void GovernorImpl::requestMap(ServerConnection connection,int id)
+{
+    Map* map = maps.get(id);
+    if(map)
+    {
+        Json::Value msg(Json::objectValue);
+        msg["msg"] = SEND_MAP;
+        msg["id"] = id;
+        msg["path"] = map->path;
+        msg["heightmap"] = map->heightmappath;
+        msg["width"] = map->width;
+        msg["height"] = map->height;
+        connection->write(msg);
+    }
+}
+
+void GovernorImpl::sendLocatableOptionList(ServerConnection connection,int id)
+{
+    Json::Value msg(Json::objectValue);
+    msg["msg"] = SEND_LOCATABLE_OPTIONLIST;
+    int player_id = connections.get(connection);
+    if(player_id)
+    {
+        Locatable* player = locatables.get(player_id);
+        Locatable* locatable = locatables.get(id);
+        if(player && locatable)
+        {
+            OptionList* optionlist = locatable->getOptionList(player);
+            int olid = optionLists.create(optionlist);
+            msg["id"] = id;
+            int i=0;
+            Json::Value options(Json::arrayValue);
+            for(OptionList::Options::iterator iter=optionlist->options.begin(); iter!=optionlist->options.end(); ++iter,++i)
+            {
+                Json::Value option(Json::objectValue);
+                option["index"] = i;
+                option["description"] = (*iter)->getDescription();
+                option["optionlist"] = olid;
+                options.append(option);
+            }
+
+            msg["options"] = options;
+            connection->write(msg);
+        }
+    }
+}
+
+void GovernorImpl::introduceAllLocatables(ServerConnection connection,int id)
+{
+    std::cout << "introduce all locatables " << id << std::endl;
+    Locatable* locatable = locatables.get(id);
+    if(locatable)
+    {
         Map* map = locatable->getPosition().map;
-        if(map) {
-            for(Map::Locatables::iterator i=map->locatables.begin();i!=map->locatables.end();++i) {
-                reg<Locatable> loc(*i);
-                getLocatableIntroduction(connection,loc.id());
+        if(map)
+        {
+            std::cout << "map found" << std::endl;
+            for(Map::Locatables::iterator i=map->locatables.begin(); i!=map->locatables.end(); ++i)
+            {
+                Locatable* loc = *i;
+                int loc_id = locatables.get(loc);
+                std::cout << "#" << loc_id << std::endl;
+                if(loc_id)
+                    getLocatableIntroduction(connection,loc_id);
             }
         }
     }
 }
+
+Governor::Governor() : log("server_log.txt"),d(new GovernorImpl(*this)) {
+    std::cout << "Governor constructed" << std::endl;
+}
+
+Governor gov;
+
+Governor& Governor::get() {
+    //static Governor instance;
+    return gov;
+}
+
+bool Governor::isAlive()
+{
+    return d->alive;
+}
+void Governor::run()
+{
+    d->lua.run();
+    d->run();
+}
+int Governor::getTicks()
+{
+    return d->ticks;
+}
+
+/** Interface for the world **/
+void Governor::updateLocatablePosition(Locatable* locatable)
+{
+    d->updateLocatablePosition(locatable);
+}
+void Governor::moveLocatable(int id,float x,float y)
+{
+    d->moveLocatable(id,x,y);
+}
+void Governor::writeMessage(int id,const std::string& msg)
+{
+    d->writeMessage(id,msg);
+}
+
+/** Interface for the network **/
+void Governor::onClientConnected(ServerConnection connection)
+{
+    d->onClientConnected(connection);
+}
+void Governor::getLocatableOptionList(ServerConnection connection,int id)
+{
+    d->getLocatableOptionList(connection,id);
+}
+void Governor::walkTo(ServerConnection connection,float x,float y)
+{
+    d->walkTo(connection,x,y);
+}
+
+void Governor::chooseOption(ServerConnection connection,int optionlist,int id)
+{
+    d->chooseOption(connection,optionlist,id);
+}
+void Governor::getLocatablePosition(ServerConnection connection,int id)
+{
+    d->getLocatablePosition(connection,id);
+}
+void Governor::getLocatableIntroduction(ServerConnection connection,int id)
+{
+    d->getLocatableIntroduction(connection,id);
+}
+
+void Governor::login(ServerConnection connection, const std::string& username, const std::string& password)
+{
+    d->login(connection,username,password);
+}
+
+void Governor::requestMap(ServerConnection connection,int id)
+{
+    d->requestMap(connection,id);
+}
+
+MapContainer& Governor::getMaps() {
+    return d->maps;
+}
+LocatableContainer& Governor::getLocatables() { return d->locatables; }
+OptionListContainer& Governor::getOptionLists() { return d->optionLists; }
+ConnectionContainer& Governor::getConnections() { return d->connections; }
 
 
 }

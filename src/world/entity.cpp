@@ -3,7 +3,7 @@
 
 namespace Ennovia {
 
-OptionList* Entity::getOptionList(LivingObject* o) {
+OptionList* Entity::getOptionList(Locatable* o) {
     return new OptionList();
 }
 
